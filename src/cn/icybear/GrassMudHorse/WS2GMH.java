@@ -7,10 +7,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * Ò»¸ö×ª»»Whitespace(.ws)µ½GrassMudHorse£¨.gmh£©µÄ¹¤¾ß¡£
- * 
+ * ä¸€ä¸ªè½¬æ¢Whitespace(.ws)åˆ°GrassMudHorseï¼ˆ.gmhï¼‰çš„å·¥å…·ã€‚
+ *
  * @author Bearice
- * 
+ *
  */
 public class WS2GMH {
 
@@ -32,15 +32,15 @@ public class WS2GMH {
 	    switch (ch) {
 	    case ' ':
 		// writer.append("[Space]");
-		ch = '²İ';
+		ch = 'è‰';
 		break;
 	    case '\t':
 		// writer.append("[Tab]");
-		ch = 'Äà';
+		ch = 'æ³¥';
 		break;
 	    case '\n':
 		// writer.append("[LF]\n");
-		writer.append('Âí');
+		writer.append('é©¬');
 		break;
 	    }
 	    writer.append((char) ch);

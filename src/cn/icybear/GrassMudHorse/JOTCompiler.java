@@ -13,11 +13,11 @@ import java.util.LinkedList;
 import javax.script.ScriptException;
 
 /**
- * JOT£¨Just Out of Time£©±àÒëÆ÷£¬ÓÃÓÚ½âÎö£¬ÑéÖ¤²İÄàÂíÓïÎÄ¼şÊÇ·ñºÏ·¨¡£
- * ÁíÍâ±¾ÀàµÄmain·½·¨¿ÉÒÔ°É²İÄàÂíÓïÎÄ¼ş±àÒë³ÉÎ±»ã±à´úÂë£¬¸úÊÊÒËÔÄ¶Á¡£
- * 
+ * JOTï¼ˆJust Out of Timeï¼‰ç¼–è¯‘å™¨ï¼Œç”¨äºè§£æï¼ŒéªŒè¯è‰æ³¥é©¬è¯­æ–‡ä»¶æ˜¯å¦åˆæ³•ã€‚
+ * å¦å¤–æœ¬ç±»çš„mainæ–¹æ³•å¯ä»¥å§è‰æ³¥é©¬è¯­æ–‡ä»¶ç¼–è¯‘æˆä¼ªæ±‡ç¼–ä»£ç ï¼Œè·Ÿé€‚å®œé˜…è¯»ã€‚
+ *
  * @author Bearice
- * 
+ *
  */
 public class JOTCompiler {
 
@@ -120,22 +120,22 @@ public class JOTCompiler {
     private BigInteger readUnsignedArg() throws ScriptException, IOException {
 	BigInteger ret = null;
 	int val;
-	while ((val = readNext()) != 'Âí') {
+	while ((val = readNext()) != 'é©¬') {
 	    if (ret == null)
 		ret = BigInteger.ZERO;
 	    switch (val) {
-	    case '²İ':
+	    case 'è‰':
 		ret = ret.shiftLeft(1);
 		break;
-	    case 'Äà':
+	    case 'æ³¥':
 		ret = ret.shiftLeft(1).add(BigInteger.ONE);
 		break;
 	    default:
-		throwUnexpectedChar(val, createExpected('²İ', 'Äà', 'Âí'));
+		throwUnexpectedChar(val, createExpected('è‰', 'æ³¥', 'é©¬'));
 	    }
 	}
 	if (ret == null) {
-	    throwUnexpectedChar(val, createExpected('²İ', 'Äà'));
+	    throwUnexpectedChar(val, createExpected('è‰', 'æ³¥'));
 	}
 	return ret;
     }
@@ -146,26 +146,26 @@ public class JOTCompiler {
 	BigInteger sign = BigInteger.ZERO;
 	int val = readNext();
 	switch (val) {
-	case '²İ':
+	case 'è‰':
 	    sign = BigInteger.ONE;
 	    break;
-	case 'Äà':
+	case 'æ³¥':
 	    sign = BigInteger.ONE.negate();
 	    break;
 	default:
-	    throwUnexpectedChar(val, new int[] { '²İ', 'Äà' });
+	    throwUnexpectedChar(val, new int[] { 'è‰', 'æ³¥' });
 	}
 	BigInteger ret = BigInteger.ZERO;
-	while ((val = readNext()) != 'Âí') {
+	while ((val = readNext()) != 'é©¬') {
 	    switch (val) {
-	    case '²İ':
+	    case 'è‰':
 		ret = ret.shiftLeft(1);
 		break;
-	    case 'Äà':
+	    case 'æ³¥':
 		ret = ret.shiftLeft(1).add(BigInteger.ONE);
 		break;
 	    default:
-		throwUnexpectedChar(val, createExpected('²İ', 'Äà', 'Âí'));
+		throwUnexpectedChar(val, createExpected('è‰', 'æ³¥', 'é©¬'));
 	    }
 	}
 	return ret.multiply(sign);
@@ -179,175 +179,175 @@ public class JOTCompiler {
 	outer: switch (imp) {
 	case -1:
 	    return OpCode.X_EOF;
-	case 'Ğ·':
+	case 'èŸ¹':
 	    // End
 	    return OpCode.F_END;
-	case '²İ':
+	case 'è‰':
 	    // Stack
 	    imp = readNext();
 	    switch (imp) {
-	    case '²İ':
+	    case 'è‰':
 		// Push
 		return OpCode.S_PUSH;
-	    case 'Äà':
+	    case 'æ³¥':
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    // Copy
 		    return OpCode.S_COPY;
-		case 'Âí':
+		case 'é©¬':
 		    // Slide
 		    return OpCode.S_SLIDE;
 		}
-		expected = createExpected('²İ', 'Âí');
+		expected = createExpected('è‰', 'é©¬');
 		break outer;
-	    case 'Âí':
+	    case 'é©¬':
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    // Dup
 		    return OpCode.S_DUP;
-		case 'Äà':
+		case 'æ³¥':
 		    // Swap
 		    return OpCode.S_SWAP;
-		case 'Âí':
+		case 'é©¬':
 		    // Pop
 		    return OpCode.S_POP;
 		}
 	    }
-	    expected = createExpected('²İ', 'Äà', 'Âí');
+	    expected = createExpected('è‰', 'æ³¥', 'é©¬');
 	    break outer;
-	case 'Âí':
+	case 'é©¬':
 	    // Flow Control
 	    imp = readNext();
 	    switch (imp) {
-	    case '²İ':
+	    case 'è‰':
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    // Mark
 		    return OpCode.F_MARK;
-		case 'Äà':
+		case 'æ³¥':
 		    // Call
 		    return OpCode.F_CALL;
-		case 'Âí':
+		case 'é©¬':
 		    // Jump
 		    return OpCode.F_JMP;
 		}
-		expected = createExpected('²İ', 'Äà', 'Âí');
+		expected = createExpected('è‰', 'æ³¥', 'é©¬');
 		break outer;
-	    case 'Äà':
+	    case 'æ³¥':
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    // Jump if Zero
 		    return OpCode.F_JZ;
-		case 'Äà':
+		case 'æ³¥':
 		    // Jump if Negative
 		    return OpCode.F_JNEG;
-		case 'Âí':
+		case 'é©¬':
 		    // Return
 		    return OpCode.F_RET;
 		}
-		expected = createExpected('²İ', 'Äà', 'Âí');
+		expected = createExpected('è‰', 'æ³¥', 'é©¬');
 		break outer;
-	    case 'Âí':
+	    case 'é©¬':
 		imp = readNext();
 		switch (imp) {
-		case 'Âí':
+		case 'é©¬':
 		    // End
 		    return OpCode.F_END;
 		}
-		expected = createExpected('Âí');
+		expected = createExpected('é©¬');
 		break outer;
 	    }
-	    expected = createExpected('²İ', 'Äà', 'Âí');
+	    expected = createExpected('è‰', 'æ³¥', 'é©¬');
 	    break outer;
-	case 'Äà':
+	case 'æ³¥':
 	    imp = readNext();
 	    switch (imp) {
-	    case '²İ':
+	    case 'è‰':
 		// Arithmetic
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    imp = readNext();
 		    switch (imp) {
-		    case '²İ':
+		    case 'è‰':
 			// Addition
 			return OpCode.A_ADD;
-		    case 'Äà':
+		    case 'æ³¥':
 			// Subtraction
 			return OpCode.A_SUB;
-		    case 'Âí':
+		    case 'é©¬':
 			// Multiplication
 			return OpCode.A_MUL;
 		    }
-		    expected = createExpected('²İ', 'Äà', 'Âí');
+		    expected = createExpected('è‰', 'æ³¥', 'é©¬');
 		    break outer;
-		case 'Äà':
+		case 'æ³¥':
 		    imp = readNext();
 		    switch (imp) {
-		    case '²İ':
+		    case 'è‰':
 			// Division
 			return OpCode.A_DIV;
-		    case 'Äà':
+		    case 'æ³¥':
 			// Modulo
 			return OpCode.A_MOD;
 		    }
-		    expected = createExpected('²İ', 'Äà');
+		    expected = createExpected('è‰', 'æ³¥');
 		    break outer;
 		}
-		expected = createExpected('²İ', 'Äà');
+		expected = createExpected('è‰', 'æ³¥');
 		break outer;
-	    case 'Äà':
+	    case 'æ³¥':
 		// Heap access
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    // Store
 		    return OpCode.H_PUT;
-		case 'Äà':
+		case 'æ³¥':
 		    // Retrieve
 		    return OpCode.H_GET;
 		}
-		expected = createExpected('²İ', 'Äà');
+		expected = createExpected('è‰', 'æ³¥');
 		break outer;
-	    case 'Âí':
+	    case 'é©¬':
 		// IO Control
 		imp = readNext();
 		switch (imp) {
-		case '²İ':
+		case 'è‰':
 		    imp = readNext();
 		    switch (imp) {
-		    case '²İ':
+		    case 'è‰':
 			// Output the character at the top of the stack
 			return OpCode.O_CHR;
-		    case 'Äà':
+		    case 'æ³¥':
 			// Output the number at the top of the stack
 			return OpCode.O_INT;
 		    }
-		    expected = createExpected('²İ', 'Äà');
+		    expected = createExpected('è‰', 'æ³¥');
 		    break outer;
-		case 'Äà':
+		case 'æ³¥':
 		    imp = readNext();
 		    switch (imp) {
-		    case '²İ':
+		    case 'è‰':
 			// Read a character and place it in the location given
 			// by the top of the stack
 			return OpCode.I_CHR;
-		    case 'Äà':
+		    case 'æ³¥':
 			// Read a number and place it in the location given by
 			// the top of the stack
 			return OpCode.I_INT;
 		    }
-		    expected = createExpected('²İ', 'Äà');
+		    expected = createExpected('è‰', 'æ³¥');
 		    break outer;
 		}
-		expected = createExpected('²İ', 'Äà');
+		expected = createExpected('è‰', 'æ³¥');
 		break outer;
 	    }
-	    expected = createExpected('²İ', 'Äà', 'Âí', 'Ğ·', -1);
+	    expected = createExpected('è‰', 'æ³¥', 'é©¬', 'èŸ¹', -1);
 	}
 	throwUnexpectedChar(imp, expected);
 	return null;
@@ -365,21 +365,21 @@ public class JOTCompiler {
 	    int ret = reader.read();
 	    colNum++;
 	    switch (ret) {
-	    case '²İ':
-	    case 'Äà':
-	    case 'Âí':
+	    case 'è‰':
+	    case 'æ³¥':
+	    case 'é©¬':
 		if (readEcho)
 		    System.out.print((char) ret);
 	    case -1:
 		return ret;
-	    case 'Ğ·':
+	    case 'èŸ¹':
 		if (lastRiver) {
 		    if (readEcho)
 			System.out.print((char) ret);
 		    return ret;
 		} else
 		    continue;
-	    case 'ºÓ':
+	    case 'æ²³':
 		if (readEcho)
 		    System.out.print((char) ret);
 		lastRiver = true;
