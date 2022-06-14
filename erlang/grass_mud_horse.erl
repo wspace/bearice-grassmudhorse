@@ -134,18 +134,18 @@ run([{jz,L}|Rest],Stack,Dict,Code)->
 		_->
 			run(Rest,Stack0,Dict,Code)
 	end;
-run([{jnz,L}|Rest],Stack,Dict,Code)->
+run([{jn,L}|Rest],Stack,Dict,Code)->
 	[H|Stack0]=Stack,
 	case H of
-		0->
-			run(Rest,Stack0,Dict,Code);
-		_->
+		_ when H < 0 ->
 			case catch dict:fetch(L, Code) of
 				CS when is_list(CS)->
 					run(CS,Stack0,Dict,Code);
 				_ ->
 					{error,{'SIGSEGV',{code,L}}}
-			end
+			end;
+		_->
+			run(Rest,Stack0,Dict,Code)
 	end;
 run([ret|_Rest],Stack,Dict,_Code)->
 	{ret,Stack,Dict};
@@ -153,12 +153,13 @@ run([exit|_Rest],Stack,Dict,_Code)->
 	{exit,Stack,Dict};
 
 run([iint|Rest],Stack,Dict,Code)->
+	[N|Stack1] = Stack,
 	case io:fread("", "~d") of
 		{ok,[Num]}->
-			run(Rest,[Num|Stack],Dict,Code);
+			Dict1 = dict:store(N, Num, Dict),
+			run(Rest,Stack1,Dict1,Code);
 		{error,E}->
-			io:write("Please inuput an integer! (~p)~n",[E]),
-			run([iint|Rest],Stack,Dict,Code);
+			{error,E};
 		eof ->
 			{error,eof}
   	end;
@@ -168,9 +169,11 @@ run([oint|Rest],Stack,Dict,Code)->
 	run(Rest,S,Dict,Code);
 
 run([ichr|Rest],Stack,Dict,Code)->
+	[N|Stack1] = Stack,
 	case io:get_chars("",1) of
-		{ok,[[Num]]}->
-			run(Rest,[Num|Stack],Dict,Code);
+		[Num]->
+			Dict1 = dict:store(N, Num, Dict),
+			run(Rest,Stack1,Dict1,Code);
 		{error,E}->
 			{error,{'SIGPIPE',E}};
 		eof ->
@@ -245,8 +248,8 @@ compile_opc([?JMP|Rest])->
 	compile_label(jmp,Rest);
 compile_opc([?JZ|Rest])->
 	compile_label(jz,Rest);
-compile_opc([?JNZ|Rest])->
-	compile_label(jnz,Rest);
+compile_opc([?JN|Rest])->
+	compile_label(jn,Rest);
 compile_opc([?RET|Rest])->
 	{ok,ret,Rest};
 compile_opc([?EXIT|Rest])->

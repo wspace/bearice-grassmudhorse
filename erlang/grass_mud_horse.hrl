@@ -24,7 +24,7 @@
 -define(CALL,h,g,m).
 -define(JMP, h,g,h).
 -define(JZ,  h,m,g).
--define(JNZ, h,m,m).
+-define(JN,  h,m,m).
 -define(RET, h,m,h).
 -define(EXIT,h,h,h).
 -define(EXIT2,r,c).
