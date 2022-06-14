@@ -20,7 +20,7 @@ public class WS2GMH {
      */
     public static void main(String[] args) throws IOException {
 	if (args.length < 1) {
-	    System.out.println("Usage WS2GMH <ws_file> [gsh_file]");
+	    System.out.println("Usage WS2GMH <ws_file> [gmh_file]");
 	    return;
 	}
 	String wsf = args[0];
