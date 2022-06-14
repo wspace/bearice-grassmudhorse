@@ -19,8 +19,13 @@
 compile_run(Filename)->
 	case c(Filename) of
 		{ok,Code}->
-			r(Code);
-		Err->Err
+			case r(Code) of
+				{error,E}->
+					io:fwrite("Runtime error: ~p~n", [E]);
+				_->ok
+			end;
+		{error,E}->
+			io:fwrite("Parse error: ~p~n", [E])
 	end.
 
 c(Filename)->
@@ -187,7 +192,9 @@ run([ochr|Rest],Stack,Dict,Code)->
 run([{defun,_}|Rest],Stack,Dict,Code)->
 	run(Rest,Stack,Dict,Code);
 run([C|_],_Stack,_Dict,_Code)->
-	{error,{bad_opcode,C}}.
+	{error,{bad_opcode,C}};
+run([],_Stack,_Dict,_Code)->
+	{error,unterminated}.
 
 
 tokenize(<<C/utf8,Rest/binary>>,Acc)->
