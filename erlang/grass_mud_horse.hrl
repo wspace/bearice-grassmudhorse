@@ -1,32 +1,35 @@
--define(G,16#8349/utf8). %unicode
--define(M,16#6CE5/utf8).
--define(H,16#9A6C/utf8).
--define(PUSH,?G,?G).
--define(DUP, ?G,?H,?G).
--define(COPY,?G,?M,?G).
--define(SWAP,?G,?H,?M).
--define(POP, ?G,?H,?H).
--define(SLID,?G,?M,?H).
+-define(G,16#8349). %unicode
+-define(M,16#6CE5).
+-define(H,16#9A6C).
+-define(R,16#6CB3).
+-define(C,16#87F9).
 
--define(ADD ,?M,?G,?G,?G).
--define(SUB ,?M,?G,?G,?M).
--define(MUL ,?M,?G,?G,?H).
--define(DIV ,?M,?G,?M,?G).
--define(MOD ,?M,?G,?M,?M).
+-define(PUSH,g,g).
+-define(DUP, g,h,g).
+-define(COPY,g,m,g).
+-define(SWAP,g,h,m).
+-define(POP, g,h,h).
+-define(SLID,g,m,h).
 
--define(SET ,?M,?M,?G).
--define(LOAD,?M,?M,?M).
+-define(ADD, m,g,g,g).
+-define(SUB, m,g,g,m).
+-define(MUL, m,g,g,h).
+-define(DIV, m,g,m,g).
+-define(MOD, m,g,m,m).
 
--define(DEF, ?H,?G,?G).
--define(CALL,?H,?G,?M).
--define(JMP, ?H,?G,?H).
--define(JZ,  ?H,?M,?G).
--define(JNZ, ?H,?M,?M).
--define(RET, ?H,?M,?H).
--define(EXIT,?H,?H,?H).
--define(EXIT2,16#6CB3/utf8,16#87F9/utf8).
+-define(SET, m,m,g).
+-define(LOAD,m,m,m).
 
--define(IINT,?M,?H,?M,?M).
--define(OINT,?M,?H,?G,?M).
--define(ICHR,?M,?H,?M,?G).
--define(OCHR,?M,?H,?G,?G).
+-define(DEF, h,g,g).
+-define(CALL,h,g,m).
+-define(JMP, h,g,h).
+-define(JZ,  h,m,g).
+-define(JNZ, h,m,m).
+-define(RET, h,m,h).
+-define(EXIT,h,h,h).
+-define(EXIT2,r,c).
+
+-define(IINT,m,h,m,m).
+-define(OINT,m,h,g,m).
+-define(ICHR,m,h,m,g).
+-define(OCHR,m,h,g,g).

@@ -1,4 +1,4 @@
-%% (c) Copyright Bearice 2010.  All rights reserved. 
+%% (c) Copyright Bearice 2010.  All rights reserved.
 %% See COPYING for more copyrights details
 %% TODO: Add description to grass_mud_horse
 
@@ -11,17 +11,27 @@
 %%
 %% Exported Functions
 %%
--export([c/1,load/1,r/1]).
+-export([compile_run/1,c/1,load/1,r/1]).
 
 %%
 %% API Functions
 %%
+compile_run(Filename)->
+	case c(Filename) of
+		{ok,Code}->
+			r(Code);
+		Err->Err
+	end.
+
 c(Filename)->
-	{ok,Data}=file:read_file(Filename),
-	compile(Data,[]).
+	case file:read_file(Filename) of
+		{ok,Data}->
+			compile(tokenize(Data,[]),[]);
+		Err->Err
+	end.
 
 r(Code)->
-	case load(Code) of 
+	case load(Code) of
 		{ok,Code1}->
 			run(Code,[],dict:new(),Code1);
 		{error,R}->
@@ -79,14 +89,15 @@ run([mod|Rest],Stack,Dict,Code)->
 	[R|S1]=Stack,
 	[L|S2]=S1,
 	run(Rest,[L rem R|S2],Dict,Code);
-run([{set,N}|Rest],Stack,Dict,Code)->
-	[H|Stack1]=Stack,
+run([set|Rest],Stack,Dict,Code)->
+	[H,N|Stack1]=Stack,
 	Dict1 = dict:store(N, H, Dict),
 	run(Rest,Stack1,Dict1,Code);
-run([{load,N}|Rest],Stack,Dict,Code)->
+run([load|Rest],Stack,Dict,Code)->
+	[N|Stack1]=Stack,
 	case catch dict:fetch(N, Dict) of
 		X when is_integer(X)->
-			run(Rest,[X|Stack],Dict,Code);
+			run(Rest,[X|Stack1],Dict,Code);
 		_ ->
 			{error,{'SIGSEGV',{heap,N}}}
 	end;
@@ -94,7 +105,7 @@ run([{load,N}|Rest],Stack,Dict,Code)->
 run([{call,L}|Rest],Stack,Dict,Code)->
 	case catch dict:fetch(L, Code) of
 		CS when is_list(CS)->
-			case run(CS,Stack,Dict,Code) of 
+			case run(CS,Stack,Dict,Code) of
 				{ret,NS,ND}->
 					run(Rest,NS,ND,Code);
 				ErrorOrExit->
@@ -142,7 +153,7 @@ run([exit|_Rest],Stack,Dict,_Code)->
 	{exit,Stack,Dict};
 
 run([iint|Rest],Stack,Dict,Code)->
-	case io:fread("", "~d") of 
+	case io:fread("", "~d") of
 		{ok,[Num]}->
 			run(Rest,[Num|Stack],Dict,Code);
 		{error,E}->
@@ -157,7 +168,7 @@ run([oint|Rest],Stack,Dict,Code)->
 	run(Rest,S,Dict,Code);
 
 run([ichr|Rest],Stack,Dict,Code)->
-	case io:get_chars("",1) of 
+	case io:get_chars("",1) of
 		{ok,[[Num]]}->
 			run(Rest,[Num|Stack],Dict,Code);
 		{error,E}->
@@ -176,96 +187,105 @@ run([C|_],_Stack,_Dict,_Code)->
 	{error,{bad_opcode,C}}.
 
 
-	
-compile(<<>>,Acc)->
-	lists:reverse(Acc);
+tokenize(<<C/utf8,Rest/binary>>,Acc)->
+	case C of
+		?G -> tokenize(Rest,[g|Acc]);
+		?M -> tokenize(Rest,[m|Acc]);
+		?H -> tokenize(Rest,[h|Acc]);
+		?R -> tokenize(Rest,[r|Acc]);
+		?C -> tokenize(Rest,[c|Acc]);
+		_->tokenize(Rest,Acc)
+		end;
+tokenize(<<>>,Acc)->lists:reverse(Acc).
+
+compile([],Acc)->
+	{ok,lists:reverse(Acc)};
 compile(D,Acc)->
-	case compile_opc(D) of 
+	case compile_opc(D) of
 		{ok,Code,Rest}->
 			compile(Rest,[Code|Acc]);
-		{ingore,Rest}->
-			compile(Rest,Acc)
+		{error,What,_}->
+			{error,{What,D,lists:reverse(Acc)}}
   	end.
 
-compile_opc(<<?PUSH,Rest/binary>>)->
-	{ok,N,Rest1} = compile_number(Rest),
-	{ok,{push,N},Rest1};
-compile_opc(<<?DUP,Rest/binary>>)->
+compile_opc([?PUSH|Rest])->
+	compile_number(push,Rest);
+compile_opc([?DUP|Rest])->
 	{ok,dup,Rest};
-compile_opc(<<?COPY,Rest/binary>>)->
-	{ok,N,Rest1} = compile_number(Rest),
-	{ok,{copy,N},Rest1};
-compile_opc(<<?SWAP,Rest/binary>>)->
+compile_opc([?COPY|Rest])->
+	compile_number(copy,Rest);
+compile_opc([?SWAP|Rest])->
 	{ok,swap,Rest};
-compile_opc(<<?POP,Rest/binary>>)->
+compile_opc([?POP|Rest])->
 	{ok,pop,Rest};
-compile_opc(<<?SLID,Rest/binary>>)->
-	{ok,N,Rest1} = compile_number(Rest),
-	{ok,{slide,N},Rest1};
+compile_opc([?SLID|Rest])->
+	compile_number(slide,Rest);
 
-compile_opc(<<?ADD,Rest/binary>>)->
+compile_opc([?ADD|Rest])->
 	{ok,add,Rest};
-compile_opc(<<?SUB,Rest/binary>>)->
+compile_opc([?SUB|Rest])->
 	{ok,sub,Rest};
-compile_opc(<<?MUL,Rest/binary>>)->
+compile_opc([?MUL|Rest])->
 	{ok,mul,Rest};
-compile_opc(<<?DIV,Rest/binary>>)->
+compile_opc([?DIV|Rest])->
 	{ok,'div',Rest};
-compile_opc(<<?MOD,Rest/binary>>)->
+compile_opc([?MOD|Rest])->
 	{ok,mod,Rest};
 
-compile_opc(<<?SET,Rest/binary>>)->
-	{ok,N,Rest1} = compile_number(Rest),
-	{ok,{set,N},Rest1};
-compile_opc(<<?LOAD,Rest/binary>>)->
-	{ok,N,Rest1} = compile_number(Rest),
-	{ok,{load,N},Rest1};
+compile_opc([?SET|Rest])->
+	{ok,set,Rest};
+compile_opc([?LOAD|Rest])->
+	{ok,load,Rest};
 
-compile_opc(<<?DEF,Rest/binary>>)->
-	{ok,L,Rest1} = compile_lable(Rest),
-	{ok,{defun,L},Rest1};
-compile_opc(<<?CALL,Rest/binary>>)->
-	{ok,L,Rest1} = compile_lable(Rest),
-	{ok,{call,L},Rest1};
-compile_opc(<<?JMP,Rest/binary>>)->
-	{ok,L,Rest1} = compile_lable(Rest),
-	{ok,{jmp,L},Rest1};
-compile_opc(<<?JZ,Rest/binary>>)->
-	{ok,L,Rest1} = compile_lable(Rest),
-	{ok,{jz,L},Rest1};
-compile_opc(<<?JNZ,Rest/binary>>)-> 
-	{ok,L,Rest1} = compile_lable(Rest),
-	{ok,{jnz,L},Rest1};
-compile_opc(<<?RET,Rest/binary>>)-> 
+compile_opc([?DEF|Rest])->
+	compile_label(defun,Rest);
+compile_opc([?CALL|Rest])->
+	compile_label(call,Rest);
+compile_opc([?JMP|Rest])->
+	compile_label(jmp,Rest);
+compile_opc([?JZ|Rest])->
+	compile_label(jz,Rest);
+compile_opc([?JNZ|Rest])->
+	compile_label(jnz,Rest);
+compile_opc([?RET|Rest])->
 	{ok,ret,Rest};
-compile_opc(<<?EXIT,Rest/binary>>)->
+compile_opc([?EXIT|Rest])->
 	{ok,exit,Rest};
-compile_opc(<<?EXIT2,Rest/binary>>)->
+compile_opc([?EXIT2|Rest])->
 	{ok,exit,Rest};
 
-compile_opc(<<?IINT,Rest/binary>>)->
+compile_opc([?IINT|Rest])->
 	{ok,iint,Rest};
-compile_opc(<<?OINT,Rest/binary>>)->
+compile_opc([?OINT|Rest])->
 	{ok,oint,Rest};
-compile_opc(<<?ICHR,Rest/binary>>)->
+compile_opc([?ICHR|Rest])->
 	{ok,ichr,Rest};
-compile_opc(<<?OCHR,Rest/binary>>)->
+compile_opc([?OCHR|Rest])->
 	{ok,ochr,Rest};
-compile_opc(<<_/utf8,Rest/binary>>)->
-	{ingore,Rest}.
+
+compile_opc(D)->
+	{error,bad_opcode,D}.
 
 
-compile_number(<<?G,D/binary>>)->compile_binary(D, 0);
-compile_number(<<?M,D/binary>>)->compile_binary(D, 0)*-1;
-compile_number(_)->{error,not_binary}.
+compile_number(Op,[g|D])->
+	compile_label(Op,D);
+compile_number(Op,[m|D])->
+	{Ok,N,Rest} = compile_binary(D,0),
+	{Ok,{Op,-N},Rest};
+compile_number(Op,[h|Rest])->
+	{ok,{Op,0},Rest};
+compile_number(Op,D)->
+	{error,{Op,bad_number},D}.
 
-compile_lable(D)->compile_binary(D, 0).
+compile_label(Op,D)->
+	{Ok,N,Rest} = compile_binary(D,0),
+	{Ok,{Op,N},Rest}.
 
-compile_binary(<<?G,Rest/binary>>,Acc)->
+compile_binary([g|Rest],Acc)->
 	compile_binary(Rest,Acc bsl 1);
-compile_binary(<<?M,Rest/binary>>,Acc)->
+compile_binary([m|Rest],Acc)->
 	compile_binary(Rest,(Acc bsl 1)+1);
-compile_binary(<<?H,Rest/binary>>,Acc)->
+compile_binary([h|Rest],Acc)->
 	{ok,Acc,Rest};
-compile_binary(<<_/utf8,Rest/binary>>,Acc)->
-	compile_binary(Rest,Acc).
+compile_binary(D,_)->
+	{error,bad_binary,D}.
